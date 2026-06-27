@@ -20,6 +20,7 @@ import org.jline.reader.ParsedLine;
 import org.jline.reader.Parser;
 import org.springframework.shell.Input;
 import org.springframework.shell.InputProvider;
+import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -33,6 +34,7 @@ import java.io.Reader;
  * of line to signal line continuation.</p>
  *
  * @author Eric Bottard
+ * @author David Pilar
  */
 public class FileInputProvider implements InputProvider, Closeable {
 
@@ -63,9 +65,13 @@ public class FileInputProvider implements InputProvider, Closeable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        if (line == null || isComment(line)) {
+        if (line == null) {
             return null;
-        } else {
+        }
+        else if (!StringUtils.hasLength(line) || isComment(line)) {
+            return readInput();
+        }
+        else {
 			ParsedLine parsedLine = parser.parse(sb.toString(), sb.toString().length());
 			return new ParsedLineInput(parsedLine);
         }

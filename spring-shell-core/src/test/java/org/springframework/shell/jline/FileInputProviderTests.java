@@ -17,15 +17,20 @@ package org.springframework.shell.jline;
 
 import org.jline.reader.EOFError;
 import org.jline.reader.impl.DefaultParser;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import org.springframework.shell.Input;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -97,5 +102,28 @@ class FileInputProviderTests {
 		assertDoesNotThrow(() -> {
 			fileInputProvider.readInput();
 		});
+	}
+
+	@Test
+	void shouldSkipEmptyAndCommentedLines() {
+		String inputContent = """
+				echo Hello World
+				// This is a comment
+				echo Line 1\\
+				Line 2
+
+				echo Line 3""";
+		Reader reader = new StringReader(inputContent);
+		fileInputProvider = new FileInputProvider(reader, springParser);
+
+		Input first = fileInputProvider.readInput();
+		Input second = fileInputProvider.readInput();
+		Input third = fileInputProvider.readInput();
+		Input fourth = fileInputProvider.readInput();
+
+		assertEquals("echo Hello World", first.rawText());
+		assertEquals("echo Line 1 Line 2", second.rawText());
+		assertEquals("echo Line 3", third.rawText());
+		assertNull(fourth);
 	}
 }
